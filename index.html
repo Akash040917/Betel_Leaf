@@ -1,15 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>TFJS Model Demo</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="script.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Betel Leaf Disease Detection (TFJS)</title>
+
+  <!-- TensorFlow.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+
+  <!-- Simple styling -->
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 24px; }
+    h1 { margin: 0 0 8px; }
+    .card { border: 1px solid #ccc; border-radius: 10px; padding: 16px; margin: 12px 0; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .col { flex: 1 1 320px; min-width: 280px; }
+    #preview { max-width: 100%; border-radius: 8px; }
+    #video { width: 100%; max-width: 480px; border-radius: 8px; }
+    button { padding: 10px 14px; border-radius: 8px; border: 1px solid #888; cursor: pointer; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .pred { font-size: 15px; line-height: 1.4; }
+    .bar { height: 10px; background: #e0e0e0; border-radius: 6px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; background: #3b82f6; }
+    footer { margin-top: 24px; font-size: 12px; opacity: 0.8; }
+    .status { font-weight: 600; }
+  </style>
 </head>
 <body>
-    <h1>Upload input and predict</h1>
-    <input type="number" id="inputValue" placeholder="Enter a number">
-    <button id="predictButton">Predict</button>
-    <p>Prediction: <span id="outputValue">-</span></p>
+  <h1>Betel Leaf Disease Detection</h1>
+  <p class="status" id="status">Loading model…</p>
+
+  <div class="row">
+    <!-- Image upload -->
+    <div class="col card">
+      <h3>Upload Image</h3>
+      <input id="file-input" type="file" accept="image/*" />
+      <div style="margin-top:12px">
+        <img id="preview" alt="Preview" />
+      </div>
+      <div style="margin-top:12px">
+        <button id="predict-image" disabled>Predict Image</button>
+      </div>
+      <div id="image-result" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Webcam -->
+    <div class="col card">
+      <h3>Webcam</h3>
+      <video id="video" autoplay playsinline muted></video>
+      <div style="margin-top:12px">
+        <button id="start-cam">Start Camera</button>
+        <button id="stop-cam" disabled>Stop</button>
+        <button id="predict-frame" disabled>Predict Frame</button>
+        <label style="margin-left:8px">
+          <input type="checkbox" id="auto-toggle" />
+          Auto (continuous)
+        </label>
+      </div>
+      <div id="cam-result" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <footer>
+    Model: TensorFlow.js converted from Keras. Works entirely in-browser.
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
+
