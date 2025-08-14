@@ -2,46 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TFJS Model Upload</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+    <title>TFJS Model Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="script.js" defer></script>
 </head>
 <body>
-    <h1>Upload Your TFJS Script</h1>
-    <input type="file" id="fileInput" accept=".js">
-    <button id="runButton">Run Script</button>
-
-    <script>
-        let uploadedScript = null;
-
-        // Listen for file selection
-        document.getElementById('fileInput').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file && file.name.endsWith('.js')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    uploadedScript = e.target.result;
-                    alert('Script loaded successfully!');
-                };
-                reader.readAsText(file);
-            } else {
-                alert('Please upload a valid .js file.');
-            }
-        });
-
-        // Execute the uploaded script
-        document.getElementById('runButton').addEventListener('click', function() {
-            if (uploadedScript) {
-                try {
-                    const scriptFunction = new Function(uploadedScript);
-                    scriptFunction();
-                } catch (err) {
-                    alert('Error executing script: ' + err.message);
-                }
-            } else {
-                alert('No script uploaded!');
-            }
-        });
-    </script>
+    <h1>Upload input and predict</h1>
+    <input type="number" id="inputValue" placeholder="Enter a number">
+    <button id="predictButton">Predict</button>
+    <p>Prediction: <span id="outputValue">-</span></p>
 </body>
 </html>
