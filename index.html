@@ -8,7 +8,6 @@
   <!-- TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
 
-  <!-- Simple styling -->
   <style>
     :root { color-scheme: light dark; }
     body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 24px; }
@@ -66,7 +65,9 @@
     Model: TensorFlow.js converted from Keras. Works entirely in-browser.
   </footer>
 
-  <script src="script.js"></script>
+  <!-- Load script after HTML is parsed -->
+  <script src="script.js" defer></script>
 </body>
 </html>
+
 
