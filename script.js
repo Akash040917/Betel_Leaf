@@ -1,59 +1,31 @@
-let model = null;
-const classLabels = [
-  'Anthracnose Green',
-  'BacterialLeafSpot Green',
-  'Healthy Green',
-  'Healthy Red'
-];
+let model;
 
+// Load your TFJS model
 async function loadModel() {
-  try {
-    document.getElementById('status').innerText = '⏳ Loading model...';
-    model = await tf.loadLayersModel('model/model.json');
-    document.getElementById('status').innerText = '✅ Model loaded';
-    document.getElementById('predictBtn').disabled = false;
-  } catch (err) {
-    console.error('Failed to load model:', err);
-    document.getElementById('status').innerText = '❌ Failed to load model.';
-  }
+    // Make sure the path points to your model.json in tfjs_model folder
+    model = await tf.loadLayersModel('tfjs_model/model.json');
+    console.log("Model loaded successfully!");
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  loadModel();
-
-  document.getElementById('imageUpload').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const img = document.getElementById('preview');
-    img.src = URL.createObjectURL(file);
-    img.style.display = 'block';
-  });
-
-  document.getElementById('predictBtn').addEventListener('click', async () => {
-    if (!model) {
-      alert('Model not loaded yet. Please wait.');
-      return;
-    }
-    const img = document.getElementById('preview');
-    if (!img.src) { 
-      alert('Please upload an image first'); 
-      return; 
+// Run prediction when user clicks
+async function runPrediction() {
+    const inputValue = parseFloat(document.getElementById('inputValue').value);
+    if (isNaN(inputValue)) {
+        alert("Please enter a valid number");
+        return;
     }
 
-    const tensor = tf.browser.fromPixels(img)
-      .resizeNearestNeighbor([224, 224])
-      .toFloat()
-      .div(tf.scalar(255.0))
-      .expandDims();
+    // Convert input to tensor
+    const inputTensor = tf.tensor2d([inputValue], [1, 1]); // Change shape if your model expects different input
+    const outputTensor = model.predict(inputTensor);
+    
+    // Extract value and show
+    const outputValue = (await outputTensor.data())[0];
+    document.getElementById('outputValue').textContent = outputValue.toFixed(4);
+}
 
-    const predictions = await model.predict(tensor).data();
-    const maxIndex = predictions.indexOf(Math.max(...predictions));
-    const prob = predictions[maxIndex];
-    document.getElementById('result').innerText =
-      `${classLabels[maxIndex]} — ${(prob * 100).toFixed(2)}%`;
-  });
-});
+// Setup button listener
+document.getElementById('predictButton').addEventListener('click', runPrediction);
 
-
-
-
+// Load the model on page load
+loadModel();
