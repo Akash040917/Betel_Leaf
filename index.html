@@ -1,17 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>TFJS Model Test</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
-    <script src="script.js" defer></script>
+  <meta charset="UTF-8">
+  <title>Betel Leaf Disease Detection</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    #videoElement, #uploadedImage {
+      border: 1px solid #ccc;
+      margin-top: 10px;
+      max-width: 90%;
+    }
+    #prediction {
+      font-size: 1.5rem;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 1rem;
+    }
+  </style>
 </head>
 <body>
-    <h1>TFJS Model Image Prediction</h1>
+  <h1>Betel Leaf Disease Detection</h1>
 
-    <input type="file" id="imageUpload" accept="image/*">
-    <p><strong>Prediction:</strong> <span id="predictionOutput">-</span></p>
+  <!-- Upload Section -->
+  <input type="file" id="imageUpload" accept="image/*">
+  <br>
+  <img id="uploadedImage" style="display:none;" />
+  <br>
 
-    <canvas id="canvas" width="224" height="224" style="display:none;"></canvas>
+  <!-- Webcam Section -->
+  <video id="videoElement" width="224" height="224" autoplay></video>
+  <br>
+  <button id="startWebcam">Start Webcam</button>
+  <button id="stopWebcam">Stop Webcam</button>
+  <button id="predictWebcam">Predict from Webcam</button>
+
+  <!-- Prediction Output -->
+  <div id="prediction">Prediction: -</div>
+
+  <!-- Hidden Canvas for Preprocessing -->
+  <canvas id="canvas" width="224" height="224" style="display:none;"></canvas>
+
+  <script src="script.js"></script>
 </body>
 </html>
+
