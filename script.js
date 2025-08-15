@@ -1,84 +1,158 @@
 let model;
-// Class names from your trained model
 const classes = ["Anthracnose", "Bacterial Leaf Spot", "Healthy", "Leaf Spot"];
 
-// Load the TFJS model
+const els = {
+  status: document.getElementById("status"),
+  img: document.getElementById("uploadedImage"),
+  video: document.getElementById("videoElement"),
+  file: document.getElementById("imageUpload"),
+  startCam: document.getElementById("startWebcam"),
+  stopCam: document.getElementById("stopWebcam"),
+  predictCam: document.getElementById("predictWebcam"),
+  canvas: document.getElementById("canvas"),
+  predSummary: document.getElementById("predSummary"),
+  predTable: document.getElementById("predTable"),
+  predBody: document.querySelector("#predTable tbody"),
+  shapeBadge: document.getElementById("shapeBadge"),
+};
+
+const showStatus = (msg, type="") => {
+  els.status.textContent = msg;
+  els.status.className = `small ${type || "muted"}`;
+};
+
+function softmax(arr) {
+  const max = Math.max(...arr);
+  const exps = arr.map(v => Math.exp(v - max));
+  const sum = exps.reduce((a,b)=>a+b,0);
+  return exps.map(v => v/sum);
+}
+
 async function loadModel() {
   try {
-    model = await tf.loadLayersModel('tfjs_model/model.json');
-    console.log("✅ Model loaded successfully");
-    console.log("Expected input shape:", model.inputs[0].shape);
-  } catch (error) {
-    console.error("❌ Error loading model:", error);
+    await tf.ready();
+    // IMPORTANT: path must match your repo structure
+    model = await tf.loadLayersModel("tfjs_model/model.json");
+    const shape = model.inputs[0].shape; // [null, H, W, C]
+    els.shapeBadge.textContent = JSON.stringify(shape);
+    showStatus("Model loaded ✓", "ok");
+    console.log("Model loaded. Input shape:", shape);
+  } catch (err) {
+    console.error(err);
+    showStatus("Failed to load model: " + (err?.message || err), "err");
   }
 }
 
-// Preprocess image to match model input
-function preprocessImage(image) {
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(image, 0, 0, 224, 224);
-  
-  let tensor = tf.browser.fromPixels(canvas)
-    .toFloat()
-    .div(255.0) // Normalize
-    .expandDims(0); // Add batch dimension
-  
-  return tensor;
+/** Get H,W from the model itself instead of hard-coding 224 */
+function getTargetHW() {
+  if (!model) return {H:224, W:224};
+  const shape = model.inputs[0].shape; // [null, H, W, C]
+  const H = shape[1] || 224;
+  const W = shape[2] || 224;
+  return {H, W};
 }
 
-// Predict function
-async function predictImage(image) {
+/** Draw media -> canvas -> tensor [1,H,W,3] normalized 0..1 */
+function preprocessToTensor(mediaEl) {
+  const {H, W} = getTargetHW();
+  els.canvas.width = W;
+  els.canvas.height = H;
+  const ctx = els.canvas.getContext("2d");
+  ctx.drawImage(mediaEl, 0, 0, W, H);
+
+  // toFloat + /255 — adjust if you used other normalization in training
+  return tf.tidy(() =>
+    tf.browser.fromPixels(els.canvas).toFloat().div(255).expandDims(0)
+  );
+}
+
+function renderPredictions(probArray) {
+  els.predBody.innerHTML = "";
+  els.predTable.style.display = "table";
+  // pair probs with labels, sort descending
+  const rows = classes.map((label, i) => ({label, p: probArray[i] || 0}))
+                      .sort((a,b) => b.p - a.p);
+
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    const td1 = document.createElement("td");
+    const td2 = document.createElement("td");
+    td1.textContent = r.label;
+    td2.textContent = (r.p*100).toFixed(2) + "%";
+    tr.appendChild(td1); tr.appendChild(td2);
+    els.predBody.appendChild(tr);
+  });
+
+  const top = rows[0];
+  els.predSummary.textContent = `Top: ${top.label} (${(top.p*100).toFixed(2)}%)`;
+  els.predSummary.className = "";
+}
+
+async function predictOn(mediaEl) {
   if (!model) {
-    alert("Model not loaded yet!");
+    showStatus("Model not loaded yet.", "err");
     return;
   }
-  
-  const inputTensor = preprocessImage(image);
-  const prediction = model.predict(inputTensor);
-  const output = await prediction.data();
+  try {
+    const x = preprocessToTensor(mediaEl);
+    const y = model.predict(x);
+    const out = await y.data();
+    x.dispose(); if (y.dispose) y.dispose();
 
-  // Find highest probability class
-  const maxIndex = output.indexOf(Math.max(...output));
-  document.getElementById("prediction").innerText =
-    `Prediction: ${classes[maxIndex]} (${(output[maxIndex] * 100).toFixed(2)}%)`;
-  
-  console.log("Prediction probabilities:", output);
+    // If final layer was logits (no softmax), apply it here:
+    const probs = Array.from(out).some(v => v < 0 || v > 1)
+      ? softmax(Array.from(out))
+      : Array.from(out);
+
+    renderPredictions(probs);
+  } catch (err) {
+    console.error(err);
+    showStatus("Prediction error: " + (err?.message || err), "err");
+  }
 }
 
-// Handle image upload
-document.getElementById("imageUpload").addEventListener("change", (event) => {
-  const file = event.target.files[0];
+/* ---------- Image upload ---------- */
+els.file.addEventListener("change", e => {
+  const file = e.target.files?.[0];
   if (!file) return;
-
-  const img = document.getElementById("uploadedImage");
-  img.onload = () => predictImage(img);
-  img.src = URL.createObjectURL(file);
-  img.style.display = "block";
+  els.video.style.display = "none";
+  els.img.style.display = "block";
+  els.img.onload = () => predictOn(els.img);
+  els.img.src = URL.createObjectURL(file);
 });
 
-// Webcam handling
+/* ---------- Webcam ---------- */
 let stream;
-document.getElementById("startWebcam").addEventListener("click", async () => {
-  const video = document.getElementById("videoElement");
+els.startCam.addEventListener("click", async () => {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    els.video.srcObject = stream;
+    els.video.style.display = "block";
+    els.img.style.display = "none";
+    showStatus("Webcam started ✓", "ok");
   } catch (err) {
-    console.error("Error starting webcam:", err);
+    console.error(err);
+    showStatus("Webcam error: " + (err?.message || err), "err");
   }
 });
 
-document.getElementById("stopWebcam").addEventListener("click", () => {
+els.stopCam.addEventListener("click", () => {
   if (stream) {
-    stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+    showStatus("Webcam stopped", "muted");
   }
+  els.video.style.display = "none";
 });
 
-document.getElementById("predictWebcam").addEventListener("click", () => {
-  const video = document.getElementById("videoElement");
-  predictImage(video);
+els.predictCam.addEventListener("click", () => {
+  if (!els.video.srcObject) {
+    showStatus("Start the webcam first.", "err");
+    return;
+  }
+  predictOn(els.video);
 });
 
-// Load model on page start
+/* ---------- Boot ---------- */
 loadModel();
+
