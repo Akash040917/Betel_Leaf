@@ -1,56 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Betel Leaf Disease Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
+    :root { --card:#ffffff; --text:#111; --muted:#666; --accent:#0a7; }
+    body { font-family: system-ui, Arial, sans-serif; background:#f6f7fb; color:var(--text); margin:0; }
+    .wrap { max-width: 980px; margin: 24px auto; padding: 16px; }
+    .card { background:var(--card); border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.08); padding: 20px; }
+    h1 { margin: 0 0 12px; }
+    .row { display:flex; flex-wrap:wrap; gap:16px; }
+    .col { flex:1 1 320px; min-width:280px; }
+    .panel { border:1px solid #eee; border-radius:12px; padding:16px; background:#fff; }
+    .actions button, .actions label {
+      background: var(--accent); color:#fff; border:none; border-radius:12px;
+      padding:10px 14px; cursor:pointer; font-size:14px; margin-right:8px;
     }
-    #videoElement, #uploadedImage {
-      border: 1px solid #ccc;
-      margin-top: 10px;
-      max-width: 90%;
-    }
-    #prediction {
-      font-size: 1.5rem;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-    button {
-      margin: 5px;
-      padding: 10px 20px;
-      font-size: 1rem;
-    }
+    .actions button.secondary { background:#444; }
+    .actions input[type=file] { display:none; }
+    .thumb, video { width:100%; max-width:420px; border-radius:12px; border:1px solid #ddd; }
+    table { width:100%; border-collapse:collapse; margin-top:12px; }
+    th, td { padding:8px 10px; border-bottom:1px solid #eee; text-align:left; }
+    .small { color:var(--muted); font-size:13px; }
+    #status.ok { color: #0a7; }
+    #status.err { color: #c00; }
+    .muted { color: var(--muted); }
   </style>
 </head>
 <body>
-  <h1>Betel Leaf Disease Detection</h1>
+  <div class="wrap">
+    <div class="card">
+      <h1>Betel Leaf Disease Detection</h1>
+      <p class="small">Loads your TFJS model from <code>tfjs_model/model.json</code> and supports image upload or webcam.</p>
 
-  <!-- Upload Section -->
-  <input type="file" id="imageUpload" accept="image/*">
-  <br>
-  <img id="uploadedImage" style="display:none;" />
-  <br>
+      <div class="row">
+        <!-- Left: controls & media -->
+        <div class="col panel">
+          <h3>Input</h3>
+          <div class="actions" style="margin-bottom:12px;">
+            <label for="imageUpload">📁 Upload Image</label>
+            <input id="imageUpload" type="file" accept="image/*" />
+            <button id="startWebcam">🎥 Start Webcam</button>
+            <button id="stopWebcam" class="secondary">■ Stop</button>
+            <button id="predictWebcam">🔮 Predict (Webcam)</button>
+          </div>
 
-  <!-- Webcam Section -->
-  <video id="videoElement" width="224" height="224" autoplay></video>
-  <br>
-  <button id="startWebcam">Start Webcam</button>
-  <button id="stopWebcam">Stop Webcam</button>
-  <button id="predictWebcam">Predict from Webcam</button>
+          <img id="uploadedImage" class="thumb" alt="Preview" style="display:none;" />
+          <video id="videoElement" class="thumb" autoplay playsinline muted style="display:none;"></video>
 
-  <!-- Prediction Output -->
-  <div id="prediction">Prediction: -</div>
+          <p id="status" class="small muted">Loading model…</p>
+          <!-- Hidden canvas used for preprocessing -->
+          <canvas id="canvas" style="display:none;"></canvas>
+        </div>
 
-  <!-- Hidden Canvas for Preprocessing -->
-  <canvas id="canvas" width="224" height="224" style="display:none;"></canvas>
+        <!-- Right: predictions -->
+        <div class="col panel">
+          <h3>Prediction</h3>
+          <div id="predSummary" class="small muted">No prediction yet.</div>
+          <table id="predTable" style="display:none;">
+            <thead>
+              <tr><th>Class</th><th>Confidence</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="small" style="margin-top:10px;">
+            <div><b>Model input:</b> <span id="shapeBadge">–</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <script src="script.js"></script>
+  <!-- Your app logic -->
+  <script src="script.js" defer></script>
 </body>
 </html>
+
 
 
