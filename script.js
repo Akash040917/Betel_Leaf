@@ -1,5 +1,6 @@
 let model;
-const classes = ["Class 1", "Class 2", "Class 3", "Class 4"]; // Replace with actual class names
+// Class names from your trained model
+const classes = ["Anthracnose", "Bacterial Leaf Spot", "Healthy", "Leaf Spot"];
 
 // Load the TFJS model
 async function loadModel() {
